@@ -555,11 +555,11 @@ module.exports = async (env, argv) => {
                 // move required assets to output dir and add a hash for cache busting
                 // Make asset paths relative to /src
                 filename: function ({ filename }) {
-                  let rootPath = path.dirname(filename) + path.sep;
-                  if (rootPath.startsWith("src" + path.sep)) {
-                    const parts = rootPath.split(path.sep);
+                  let rootPath = path.dirname(filename) + "/";
+                  if (rootPath.startsWith("src/")) {
+                    const parts = rootPath.split("/");
                     parts.shift();
-                    rootPath = parts.join(path.sep);
+                    rootPath = parts.join("/");
                   }
                   return rootPath + "[name]-[contenthash].[ext]";
                 }

@@ -177,7 +177,7 @@ module.exports = (env, argv) => {
           loader: "babel-loader",
           options: require("../babel.config"),
           exclude: function (modulePath) {
-            return /node_modules/.test(modulePath) && !/node_modules\/hubs/.test(modulePath);
+            return /node_modules/.test(modulePath) && !/node_modules[/\\]hubs/.test(modulePath);
           }
         },
         {
@@ -187,7 +187,7 @@ module.exports = (env, argv) => {
           loader: "babel-loader",
           options: require("../babel.config"),
           exclude: function (modulePath) {
-            return /node_modules/.test(modulePath) && !/node_modules\/hubs/.test(modulePath);
+            return /node_modules/.test(modulePath) && !/node_modules[/\\]hubs/.test(modulePath);
           }
         },
         // TODO worker-loader has been deprecated, but we need "inline" support which is not available yet
