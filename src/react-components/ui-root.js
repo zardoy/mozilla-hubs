@@ -837,6 +837,10 @@ class UIRoot extends Component {
           roomName={this.props.hub.name}
           showJoinRoom={!this.state.waitingOnAudio && !this.props.entryDisallowed}
           onJoinRoom={() => {
+            if (!this.props.hubChannel.signedIn) {
+              alert("You need sign in to continue joining!");
+              return;
+            }
             if (isLockedDownDemo) {
               if (this.props.forcedVREntryType?.startsWith("vr")) {
                 this.setState({ enterInVR: true }, this.onAudioReadyButton);
