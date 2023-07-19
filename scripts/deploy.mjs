@@ -1,5 +1,4 @@
-import { createReadStream, readFileSync, existsSync, unlinkSync } from "fs";
-import { exec } from "child_process";
+import { createReadStream, unlinkSync, readFileSync, existsSync } from "fs";
 import rmdir from "rimraf";
 import { copy } from "fs-extra";
 import tar from "tar";
@@ -7,6 +6,7 @@ import ora from "ora";
 import FormData from "form-data";
 import path from "path";
 import fetch from "node-fetch";
+import { execa } from "execa";
 
 if (!existsSync(".ret.credentials")) {
   console.log("Not logged in, so cannot deploy. To log in, run npm run login.");
@@ -60,35 +60,26 @@ const getTs = (() => {
 
   step.text = "Building Client.";
 
-  // await new Promise((resolve, reject) => {
-  //   exec("npm ci", {}, err => {
-  //     if (err) reject(err);
-  //     resolve();
-  //   });
-  // });
+  // await execa("npm ci", { stdio: "inherit" });
 
-  await new Promise((resolve, reject) => {
-    exec("npm run build", { env }, err => {
-      if (err) reject(err);
-      resolve();
-    });
-  });
+  const skipBuild = process.argv.includes("--skip-build");
+  if (!skipBuild) {
+    await execa("npm run build", { stdin: "inherit" });
+  }
 
   step.text = "Building Admin Console.";
 
-  // await new Promise((resolve, reject) => {
-  //   exec("npm ci", { cwd: "./admin" }, err => {
-  //     if (err) reject(err);
-  //     resolve();
-  //   });
-  // });
+  // await execa("npm ci", { stdio: "inherit", cwd: "./admin" });
 
-  await new Promise((resolve, reject) => {
-    exec("npm run build", { cwd: "./admin", env }, err => {
-      if (err) reject(err);
-      resolve();
-    });
-  });
+  if (!skipBuild) {
+    await execa("npm run build", { stdin: "inherit", cwd: "./admin", env });
+    // await new Promise((resolve, reject) => {
+    //   exec("npm run build", { cwd: "./admin", env }, err => {
+    //     if (err) reject(err);
+    //     resolve();
+    //   });
+    // });
+  }
 
   await new Promise(res => {
     copy("./admin/dist", "./dist", err => {
@@ -102,7 +93,12 @@ const getTs = (() => {
   step.text = "Preparing Deploy.";
 
   step.text = "Packaging Build.";
-  tar.c({ sync: true, gzip: true, C: path.resolve("dist"), file: "_build.tar.gz" }, ["."]);
+  await new Promise(resolve => {
+    setImmediate(() => {
+      tar.c({ sync: true, gzip: true, C: path.resolve("dist"), file: "_build.tar.gz" }, ["."]);
+      resolve();
+    });
+  });
   step.text = `Uploading Build ${buildEnv.BUILD_VERSION}.`;
 
   let uploadedUrl;
