@@ -1,0 +1,18 @@
+{
+    "configurations": [
+        {
+            "type": "msedge",
+            "name": "https://localhost:8080/",
+            "request": "launch",
+            "url": "https://localhost:8080/",
+            "outFiles": [
+                "${workspaceFolder}/dist/assets/**/*.js",
+                "!${workspaceFolder}/dist/**/*vendors*",
+                "!**/node_modules/**"
+            ],
+            "skipFiles": [
+                "<node_internals>/**/*vendors-*"
+            ],
+        },
+    ]
+}
