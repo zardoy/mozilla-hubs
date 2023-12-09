@@ -1091,14 +1091,18 @@ class PreferencesScreen extends Component {
             key: "disableTeleporter",
             prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX
           },
-          {
-            key: "enablePointerlock",
-            prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX
-          },
-          {
-            key: "enablePointerlockRawInput",
-            prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX
-          },
+          ...(document.documentElement.requestPointerLock
+            ? [
+                {
+                  key: "enablePointerlock",
+                  prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX
+                },
+                {
+                  key: "enablePointerlockRawInput",
+                  prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX
+                }
+              ]
+            : []),
           {
             key: "movementSpeedModifier",
             prefType: PREFERENCE_LIST_ITEM_TYPE.NUMBER_WITH_RANGE,

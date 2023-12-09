@@ -54,6 +54,13 @@ export class MouseDevice {
     this.lockedInPos = [0, 0];
   }
 
+  updateCoords(x, y) {
+    // Note: This assumes the canvas always starts in the top left.
+    // This works with the current sidebar and toolbar layout.
+    this.coords[0] = (x / this.canvas.clientWidth) * 2 - 1;
+    this.coords[1] = -(y / this.canvas.clientHeight) * 2 + 1;
+  }
+
   process(/** @type {MouseEvent & {target: HTMLElement}} */ event) {
     if (event.type === "wheel") {
       this.wheel += (event.deltaX + event.deltaY) / modeMod[event.deltaMode];
@@ -74,16 +81,12 @@ export class MouseDevice {
       this.movementXY[1] += event.movementY;
 
       if (document.pointerLockElement) {
-        // Note: This assumes the canvas always starts in the top left.
-        // This works with the current sidebar and toolbar layout.
-        this.coords[0] = (this.lockedInPos[0] / this.canvas.clientWidth) * 2 - 1;
-        this.coords[1] = -(this.lockedInPos[1] / this.canvas.clientHeight) * 2 + 1;
+        this.updateCoords(this.lockedInPos[0], this.lockedInPos[1]);
 
         this.lockedInPos[0] += event.movementX;
         this.lockedInPos[1] += event.movementY;
       } else {
-        this.coords[0] = (event.clientX / this.canvas.clientWidth) * 2 - 1;
-        this.coords[1] = -(event.clientY / this.canvas.clientHeight) * 2 + 1;
+        this.updateCoords(event.clientX, event.clientY);
       }
     }
 
@@ -95,22 +98,35 @@ export class MouseDevice {
         let setMouseDown = true;
         if (window.APP.store.state.preferences.enablePointerlock) {
           if (!document.pointerLockElement) {
+            const { enablePointerlockRawInput } = window.APP.store.state.preferences;
             const promise = event.target.requestPointerLock({
-              unadjustedMovement: window.APP.store.state.preferences.enablePointerlockRawInput
+              unadjustedMovement: enablePointerlockRawInput
             });
-            if (!promise) {
-              console.log("disabling mouse acceleration is not supported");
+            if (enablePointerlockRawInput) {
+              if (promise) {
+                void promise.catch(error => {
+                  if (error.name === "NotSupportedError") {
+                    // Some platforms may not support unadjusted movement, request again a regular pointer lock.
+                    event.target.requestPointerLock();
+                  }
+                });
+              } else {
+                console.log("disabling mouse acceleration is not supported");
+              }
             }
 
-            event.target.addEventListener(
+            const abortController = new AbortController();
+            document.addEventListener(
               "pointerlockchange",
               () => {
                 if (!document.pointerLockElement) {
+                  abortController.abort();
                   this[left ? "buttonLeft" : "buttonRight"] = false;
+                  this.updateCoords(event.clientX, event.clientY);
                 }
               },
               {
-                once: true
+                signal: abortController.signal
               }
             );
 
